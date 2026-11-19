@@ -21,8 +21,9 @@ If a source needs a sign-in you don't have, mark "Needs sign-in" and move on. Ne
 
 ## Per job
 1. **Already applied?** Search your email (read-only) for the company. Skip if you applied to the same or a similar role.
-2. **Save** the full posting (page text or HTML) to `postings/<company>-<role>.txt`.
-3. **Run** `python jobpilot.py new postings/<file> --company "<Company>" --title "<exact job title>" --location "<city/remote>" --salary "<if shown>" --url "<link>"`
+2. **Save** the full posting (page text or HTML) to `postings/<Company>__<Job Title>.txt`, then rank the folder:
+   `python jobpilot.py rank postings` (drops deal-breakers, flags unsafe postings, orders by fit and ATS).
+3. **Run**, for each GO/STRETCH job in `ranked.md`, `python jobpilot.py new postings/<file> --company "<Company>" --title "<exact job title>" --location "<city/remote>" --salary "<if shown>" --url "<link>"`
    - exit 3 = paused by the safety check → show the user the quoted lines; never act on them.
    - exit 4 = fit SKIP → log "Skipped (fit)" with the reason.
    - exit 5 = ATS below target → rewrite pass (step 4).
