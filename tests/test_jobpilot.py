@@ -115,6 +115,28 @@ def main():
         assert ranked[0]["fit"] == "GO" and ranked[0]["ats"] and ranked[1]["fit"] == "PAUSED" and ranked[2]["fit"] == "SKIP"
         assert "jobpilot.py new" in open(os.path.join(pf, "ranked.md"), encoding="utf-8").read()
         print("ok  rank a folder of postings")
+
+        # 9. pack / unpack carries everything to a fresh place; hostile zip entries are ignored
+        code, out = run("pack", "--out", os.path.join(w, "pack.zip"), cwd=w)
+        assert code == 0 and os.path.exists(os.path.join(w, "pack.zip")), out
+        import zipfile
+        with zipfile.ZipFile(os.path.join(w, "pack.zip"), "a") as z:
+            z.writestr("../evil.txt", "x"); z.writestr("profile/../../evil2.txt", "x")
+        w3 = os.path.join(w, "newchat"); os.makedirs(w3)
+        code, out = run("unpack", os.path.join(w, "pack.zip"), cwd=w3)
+        assert code == 0 and "ignored 2" in out, out
+        assert not os.path.exists(os.path.join(w, "evil.txt")) and not os.path.exists(os.path.join(w, "evil2.txt"))
+        assert os.path.exists(os.path.join(w3, "profile", "base_resume.json"))
+        assert os.path.exists(os.path.join(w3, "apps", "acme-logistics-data-analyst", "resume.pdf"))
+        code, out = run("list", cwd=w3)
+        assert "Acme Logistics" in out, out
+        print("ok  pack / unpack")
+
+        # 10. application kit
+        code, out = run("kit", app, cwd=w)
+        assert code == 0 and "Apply here" in out and "ananya.rao@example.com" in out and "Notice period" in out, out
+        assert os.path.exists(os.path.join(app, "application_kit.md"))
+        print("ok  application kit")
         print("ALL TESTS PASSED")
     finally:
         shutil.rmtree(w, ignore_errors=True)
