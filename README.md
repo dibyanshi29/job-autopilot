@@ -1,10 +1,51 @@
 # Job Autopilot
 
-**Tailor your resume to any job posting, honestly, and know it will get past the ATS before you apply.**
+**Your job search on autopilot, without lying on your resume.**
 
-One command takes a job posting and gives you a one-page tailored resume, its ATS score, what's still missing, and a
-checklist of next steps. Each posting is also checked for hidden prompt-injection text, and screened against your
-deal-breakers before any time is spent on it.
+Add Job Autopilot to [Claude](https://claude.ai) as a skill, and every day it:
+
+1. **Finds** fresh postings on the job sites you use (LinkedIn, Naukri, Indeed, Wellfound, company career pages, remote
+   boards…), signed in as you, and skips companies you've already applied to.
+2. **Screens** each posting for your deal-breakers (seniority, city, salary floor, night shifts…) and for hidden text
+   that tries to manipulate AI tools.
+3. **Tailors** your resume to the posting, reordering and rewording only what's already true, and scores it with the
+   [Shortlist ATS Scanner](https://github.com/dibyanshi29/shortlist-ats-scanner). It rewrites until the score is 80+.
+4. **Fills in the application** with your details and tailored resume, then **stops before Submit** so you approve each one.
+5. **Tracks every stage** in a live tracker, writes cover letters that can't invent facts, and preps you for interviews.
+
+You only chat. Claude handles the setup, the searching and the form filling.
+
+## Get started (10 minutes, no coding)
+
+1. **Download the skill.** On this page, click the green **Code** button → **Download ZIP**. Don't unzip it.
+2. **Add it to Claude.** In Claude, open **Customize → Skills**, click **+** → **Create skill** → **Upload a skill**, and
+   choose the ZIP. Make sure **job-autopilot** is switched on.
+3. **Set it up by chatting.** In the Claude desktop app, start a chat, attach your resume (PDF or Word) and say:
+   > **Set up job autopilot**
+
+   Claude reads your resume and asks about the roles you want, your cities, your salary floor, your deal-breakers and
+   which skills you can honestly claim. It then picks your job sites with you, asks you to sign in to them in the
+   browser (you type your own passwords), and builds your tracker. Finally it tailors one real posting with you as a test.
+4. **Run it.** Say **"Run job autopilot"** now, or **"Schedule job autopilot every morning at 9"**.
+
+After each run you get a summary: the jobs it found, the ones it skipped and why, each resume's ATS score, and the
+application forms waiting for your approval.
+
+You need a Claude plan that includes Skills, plus the Claude desktop app, which lets Claude use your browser and keep
+your files in a folder on your laptop.
+
+## What else you can ask
+
+- *"Tailor my resume for this job"* (paste the posting or link)
+- *"Which of these jobs should I apply to?"* (a list of links or postings) → ranked shortlist
+- *"Write a cover letter for the Acme job"* → one page, fact-checked against your profile
+- *"I have an interview with Acme on Monday"* → prep sheet built from your real experience, plus a mock interview
+- *"What's waiting for me?"* → applications to approve, interviews, status
+
+## Under the hood
+
+Claude does all of this by running `jobpilot.py`, a small Python tool in this repo. You can also run it yourself without
+Claude (Python 3.9+ and Node 18+): it then does everything except search for jobs and fill in forms.
 
 ```
 $ python jobpilot.py new posting.txt --company "Acme Logistics" --title "Data Analyst" --location Bengaluru
@@ -16,10 +57,7 @@ $ python jobpilot.py new posting.txt --company "Acme Logistics" --title "Data An
       apps/acme-logistics-data-analyst/report.md
 ```
 
-It runs on its own from the command line, and also as a [Claude](https://claude.ai) skill (`SKILL.md`). As a skill, it
-searches the job boards, runs the whole pipeline every day, fills each application form and stops before Submit for you to approve.
-
-## What you get per job
+### What you get per job
 
 | File | What it is |
 |---|---|
@@ -30,7 +68,7 @@ searches the job boards, runs the whole pipeline every day, fills each applicati
 
 ![Example tailored resume](docs/example/resume.png)
 
-## Quick start (5 minutes)
+### Run it yourself (command line)
 
 Needs **Python 3.9+** and **Node 18+**. Works on Windows, macOS and Linux.
 
@@ -50,7 +88,7 @@ python jobpilot.py doctor        # checks everything is installed
 python jobpilot.py new posting.txt --company "Acme" --title "Business Analyst" --location "Remote" --url "https://…"
 ```
 
-### Got a pile of postings? Rank them first
+#### Got a pile of postings? Rank them first
 
 Save each posting as a text file in a folder, named `Company__Job Title.txt` (or put `Company:` and `Title:` lines at the top). Then:
 
@@ -61,7 +99,7 @@ python jobpilot.py rank postings/
 You get a ranked shortlist: jobs that hit your deal-breakers drop to the bottom, poisoned postings are flagged, and each
 job shows its quick ATS score and missing keywords. `ranked.md` lists the exact `new` command to run for each one worth tailoring.
 
-## All commands
+### All commands
 
 | Command | Does |
 |---|---|
@@ -120,17 +158,6 @@ the live tool runs. Each score is out of 100:
 | Action verbs and length | 3 |
 
 The PDF is scored from its extracted text, the way an ATS parses it: with `pdftotext` when it's installed, otherwise with `pypdf`.
-
-## Use it as a Claude skill
-
-Add this folder as a skill. Then say *"set up job autopilot"* (it walks you through your profile, the skill confirmations,
-preferences and an optional tracker sheet) and *"run job autopilot"*, or schedule that daily. Claude then:
-
-- searches the job sources in your runbook
-- skips companies you've already applied to, checking your email read-only
-- runs `jobpilot.py` for each job, then does a rewrite pass and a sceptical reviewer pass
-- fills the application and **stops before Submit**, so you approve each one
-- saves facts you confirm along the way back into your profile, so you're never asked twice
 
 ## Privacy
 
