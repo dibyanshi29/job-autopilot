@@ -367,7 +367,7 @@ def pages(path):
 def pdf_text(path):
     """Plain text of a PDF: pdftotext when installed (closest to what ATS parsers see), else pypdf."""
     if shutil.which("pdftotext"):
-        out = subprocess.run(["pdftotext", "-layout", path, "-"], capture_output=True, text=True)
+        out = subprocess.run(["pdftotext", "-layout", "-enc", "UTF-8", path, "-"], capture_output=True, text=True, encoding="utf-8", errors="replace")
         if out.returncode == 0:
             return out.stdout
     from pypdf import PdfReader

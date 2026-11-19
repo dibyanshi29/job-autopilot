@@ -32,7 +32,7 @@ def text_of(path):
     ext = os.path.splitext(path)[1].lower()
     if ext == ".pdf":
         if shutil.which("pdftotext"):
-            out = subprocess.run(["pdftotext", "-layout", path, "-"], capture_output=True, text=True, encoding="utf-8")
+            out = subprocess.run(["pdftotext", "-layout", "-enc", "UTF-8", path, "-"], capture_output=True, text=True, encoding="utf-8", errors="replace")
             if out.returncode == 0 and out.stdout.strip():
                 return out.stdout
         from pypdf import PdfReader
