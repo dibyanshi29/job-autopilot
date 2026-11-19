@@ -2,7 +2,7 @@
 """End-to-end tests with the fictional example profile. Runs on Linux, macOS and Windows:
     python tests/test_jobpilot.py
 """
-import json, os, re, shutil, subprocess, sys, tempfile
+import csv, json, os, re, shutil, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CLI = [sys.executable, os.path.join(ROOT, "jobpilot.py")]
@@ -100,6 +100,21 @@ def main():
         code, out = run("new", JD, "--company", "Acme", "--title", "Data Analyst", cwd=w2)
         assert code in (0, 5), out
         print("ok  import resume -> working profile")
+
+        # 8. rank a folder of postings
+        pf = os.path.join(w, "postings"); os.makedirs(pf)
+        shutil.copy(JD, os.path.join(pf, "Acme Logistics__Data Analyst.txt"))
+        shutil.copy(POISON, os.path.join(pf, "Shady__Data Analyst.html"))
+        open(os.path.join(pf, "nope.txt"), "w", encoding="utf-8").write(
+            "Company: Nope Corp\nTitle: Operations Manager\nNight shift rotation. 9+ years.")
+        code, out = run("rank", pf, cwd=w)
+        assert code == 0, out
+        with open(os.path.join(pf, "ranked.csv"), encoding="utf-8") as fh:
+            ranked = list(csv.DictReader(fh))
+        assert [r["company"] for r in ranked] == ["Acme Logistics", "Shady", "Nope Corp"], ranked
+        assert ranked[0]["fit"] == "GO" and ranked[0]["ats"] and ranked[1]["fit"] == "PAUSED" and ranked[2]["fit"] == "SKIP"
+        assert "jobpilot.py new" in open(os.path.join(pf, "ranked.md"), encoding="utf-8").read()
+        print("ok  rank a folder of postings")
         print("ALL TESTS PASSED")
     finally:
         shutil.rmtree(w, ignore_errors=True)
