@@ -1,0 +1,9 @@
+profile/
+ci_profile/
+apps/
+jds/
+out/
+*.pdf
+*.docx
+__pycache__/
+.DS_Store

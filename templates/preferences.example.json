@@ -1,0 +1,17 @@
+{
+  "target_titles": ["business analyst", "data analyst", "operations analyst", "supply chain analyst", "mis analyst"],
+  "avoid_titles": ["intern", "sales executive", "telecaller", "director", "vp"],
+  "locations": ["bengaluru", "bangalore", "pune", "remote"],
+  "remote_ok": true,
+  "currency": "INR",
+  "salary_floor": 10,
+  "salary_note": "salary_floor is in LPA for INR, or thousands per year for USD/EUR/GBP",
+  "stretch_years": 1,
+  "deal_breakers": ["night shift", "commission only", "unpaid", "bond of"],
+  "must_have": [],
+  "notice_period": "Immediate",
+  "current_ctc": "9 LPA",
+  "expected_ctc": "12 LPA",
+  "work_authorization": "Indian citizen",
+  "relocation": "Open within India"
+}

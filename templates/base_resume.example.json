@@ -1,0 +1,207 @@
+{
+  "name": "Ananya Rao",
+  "years_experience": 3,
+  "contact": "Bengaluru | +91 90000 00000 | [ananya.rao@example.com](mailto:ananya.rao@example.com) | [linkedin.com/in/ananya-rao-example](https://www.linkedin.com/in/ananya-rao-example)",
+  "headlines": {
+    "analyst": "Business Analytics | SQL & Power BI | Reporting Automation",
+    "data": "Data Analytics | SQL & Python | Business Intelligence",
+    "operations": "Operations Analytics | Process Improvement | MIS Reporting",
+    "supply_chain": "Supply Chain & Logistics Analytics | SQL & Power BI",
+    "program": "Program Operations | Stakeholder Management | Analytics"
+  },
+  "summaries": {
+    "analyst": "Analyst with 3 years of experience turning operational data into reports for supply chain and sales teams. Built a Power BI dashboard tracking on-time delivery for 40+ carriers and automated a monthly sales report, cutting preparation from 2 days to 3 hours. Skilled in SQL, Python (pandas), Power BI and Excel.",
+    "data": "Analyst with 3 years of experience turning operational data into reports for supply chain and sales teams. Built a Power BI dashboard tracking on-time delivery for 40+ carriers and automated a monthly sales report, cutting preparation from 2 days to 3 hours. Skilled in SQL, Python (pandas), Power BI and Excel.",
+    "operations": "Analyst with 3 years of experience turning operational data into reports for supply chain and sales teams. Built a Power BI dashboard tracking on-time delivery for 40+ carriers and automated a monthly sales report, cutting preparation from 2 days to 3 hours. Skilled in SQL, Python (pandas), Power BI and Excel.",
+    "supply_chain": "Analyst with 3 years of experience turning operational data into reports for supply chain and sales teams. Built a Power BI dashboard tracking on-time delivery for 40+ carriers and automated a monthly sales report, cutting preparation from 2 days to 3 hours. Skilled in SQL, Python (pandas), Power BI and Excel.",
+    "program": "Analyst with 3 years of experience turning operational data into reports for supply chain and sales teams. Built a Power BI dashboard tracking on-time delivery for 40+ carriers and automated a monthly sales report, cutting preparation from 2 days to 3 hours. Skilled in SQL, Python (pandas), Power BI and Excel."
+  },
+  "target_titles": [
+    "business analyst",
+    "data analyst",
+    "operations analyst",
+    "supply chain analyst",
+    "mis analyst",
+    "analyst"
+  ],
+  "experience": [
+    {
+      "company": "Kestrel Freight Pvt Ltd",
+      "location": "Bengaluru",
+      "title": "Business Analyst",
+      "dates": "Jun 2023 – Present",
+      "bullets": [
+        "Built a Power BI dashboard tracking on-time delivery for **40+ carriers**, adopted by 3 regional heads for weekly performance reviews",
+        "Wrote SQL queries against the TMS database to model booking and shipment data, replacing manual exports",
+        "Flagged delayed containers early with a daily exception report, helping the operations team reduce detention charges"
+      ]
+    },
+    {
+      "company": "Brightcart Retail",
+      "location": "Pune",
+      "title": "Junior Data Analyst",
+      "dates": "Jul 2021 – May 2023",
+      "bullets": [
+        "Automated the monthly sales report in Python, cutting preparation time from **2 days to 3 hours**",
+        "Cleaned and merged sales data from **12 stores** using Excel and pandas"
+      ]
+    }
+  ],
+  "projects": [
+    "**Carrier Scorecard** (SQL, Power BI): on-time and cost KPIs for 40 carriers | [GitHub](https://github.com/example/carrier-scorecard)"
+  ],
+  "skills": {
+    "Data Analysis & BI": [
+      "SQL",
+      "Excel",
+      "Power BI",
+      "Data Cleaning",
+      "Dashboards"
+    ],
+    "Automation & Technology": [
+      "Python (pandas)",
+      "Google Sheets"
+    ],
+    "Business Operations": [
+      "Stakeholder Management",
+      "Logistics Operations"
+    ]
+  },
+  "supported_extra_skills": {
+    "Data Analysis & BI": [
+      "Data Visualization",
+      "Ad-hoc Analysis",
+      "Pivot Tables"
+    ],
+    "Business Operations": [
+      "SLA Monitoring",
+      "Cross-functional Coordination",
+      "Reporting & Documentation"
+    ]
+  },
+  "education": [
+    {
+      "school": "Christ University",
+      "location": "Bengaluru",
+      "degree": "B.Sc. Statistics",
+      "dates": "2018 - 2021"
+    }
+  ],
+  "awards": [
+    "**Google Data Analytics Professional Certificate**"
+  ],
+  "evidence_map": {
+    "stakeholders": [
+      "Business Operations",
+      "Cross-functional Stakeholders"
+    ],
+    "stakeholder management": [
+      "Business Operations",
+      "Stakeholder Management"
+    ],
+    "communication": [
+      "Business Operations",
+      "Stakeholder Communication"
+    ],
+    "cross functional": [
+      "Business Operations",
+      "Cross Functional Collaboration"
+    ],
+    "problem solving": [
+      "Business Operations",
+      "Problem Solving"
+    ],
+    "analytical skills": [
+      "Business Operations",
+      "Analytical Skills"
+    ],
+    "data validation": [
+      "Data Analysis & BI",
+      "Data Validation"
+    ],
+    "data analytics": [
+      "Data Analysis & BI",
+      "Data Analytics"
+    ],
+    "data analysis": [
+      "Data Analysis & BI",
+      "Data Analysis"
+    ],
+    "supply chain": [
+      "Business Operations",
+      "Supply Chain Analytics"
+    ],
+    "logistics": [
+      "Business Operations",
+      "Logistics Operations"
+    ],
+    "sla": [
+      "Business Operations",
+      "SLA Monitoring"
+    ],
+    "kpis": [
+      "Data Analysis & BI",
+      "KPIs"
+    ],
+    "kpi": [
+      "Data Analysis & BI",
+      "KPIs"
+    ],
+    "metrics": [
+      "Data Analysis & BI",
+      "Metrics Tracking"
+    ],
+    "reporting": [
+      "Data Analysis & BI",
+      "Reporting"
+    ],
+    "dashboards": [
+      "Data Analysis & BI",
+      "Dashboards"
+    ],
+    "data visualization": [
+      "Data Analysis & BI",
+      "Data Visualization"
+    ],
+    "excel": [
+      "Data Analysis & BI",
+      "Excel"
+    ],
+    "sql": [
+      "Data Analysis & BI",
+      "SQL"
+    ],
+    "power bi": [
+      "Data Analysis & BI",
+      "Power BI"
+    ],
+    "python": [
+      "Automation & Technology",
+      "Python"
+    ],
+    "automation": [
+      "Automation & Technology",
+      "Automation"
+    ]
+  },
+  "needs_confirmation": {
+    "etl": [
+      "Data Analysis & BI",
+      "ETL"
+    ],
+    "tableau": [
+      "Data Analysis & BI",
+      "Tableau"
+    ],
+    "forecasting": [
+      "Data Analysis & BI",
+      "Forecasting"
+    ]
+  },
+  "never_claim": [
+    "sap",
+    "erp",
+    "machine learning",
+    "s&op"
+  ]
+}

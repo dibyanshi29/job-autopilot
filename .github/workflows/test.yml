@@ -1,0 +1,22 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Optional extras (Linux only – other OSes test the built-in fallbacks)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils fonts-crosextra-carlito
+      - run: pip install -r requirements.txt
+      - run: python jobpilot.py --profile ci_profile init
+      - run: python jobpilot.py --profile ci_profile doctor
+      - run: python tests/test_jobpilot.py

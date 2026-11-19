@@ -1,0 +1,15 @@
+Data Analyst – Logistics Analytics
+Northwind Logistics | Bengaluru (Hybrid)
+
+Responsibilities
+- Build and maintain dashboards in Power BI or Tableau for operations and leadership
+- Write complex SQL queries and data pipelines to model shipment and carrier performance
+- Analyze freight costs and recommend cost-saving actions
+- Partner with stakeholders in operations, procurement and finance to define KPIs
+- Automate recurring reporting using Python
+
+Requirements
+- 2–4 years of experience in data analysis, ideally in logistics or supply chain
+- Strong SQL and Python (pandas)
+- Experience with Power BI or Tableau
+- Excellent communication and stakeholder management skills
