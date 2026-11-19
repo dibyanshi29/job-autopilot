@@ -81,6 +81,25 @@ def main():
         code, out = run("list", "--csv", cwd=w)
         assert code == 0 and "applied" in out, out
         print("ok  prep / stage / list")
+
+        # 7. import: read the generated resume PDF back into a fresh profile
+        w2 = os.path.join(w, "friend")
+        os.makedirs(w2)
+        code, out = run("import", os.path.join(app, "resume.pdf"), cwd=w2)
+        assert code == 0, out
+        imp = json.load(open(os.path.join(w2, "profile", "base_resume.json"), encoding="utf-8"))
+        assert imp["name"] == base["name"], imp["name"]
+        assert "ananya.rao@example.com" in imp["contact"], imp["contact"]
+        assert len(imp["experience"]) == len(base["experience"]), imp["experience"]
+        assert all(e["bullets"] and e["dates"] for e in imp["experience"]), imp["experience"]
+        assert imp["education"] and imp["skills"] and imp["evidence_map"]
+        imp["name"] = "Friend Example"  # a real (non-placeholder) profile ...
+        json.dump(imp, open(os.path.join(w2, "profile", "base_resume.json"), "w", encoding="utf-8"))
+        code, out = run("import", os.path.join(app, "resume.pdf"), cwd=w2)  # ... must not be overwritten
+        assert code == 0 and os.path.exists(os.path.join(w2, "profile", "base_resume.imported.json")), out
+        code, out = run("new", JD, "--company", "Acme", "--title", "Data Analyst", cwd=w2)
+        assert code in (0, 5), out
+        print("ok  import resume -> working profile")
         print("ALL TESTS PASSED")
     finally:
         shutil.rmtree(w, ignore_errors=True)
