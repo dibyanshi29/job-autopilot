@@ -6,7 +6,10 @@
   python jobpilot.py doctor                     check Python, Node, fonts
   python jobpilot.py new <posting> --company "Acme" --title "Data Analyst" [--location ..] [--salary ..] [--url ..]
                                                 safety check -> fit check -> tailor + ATS loop -> apps/<acme-data-analyst>/
+  python jobpilot.py scan [--out postings] [--max-age 30]
+                                                pull new matching jobs from the Greenhouse / Lever / Ashby boards in profile/boards.json
   python jobpilot.py rank <folder> [--top 10]   safety + fit + quick ATS for every posting in a folder -> ranked shortlist
+  python jobpilot.py live <app | url | all>     is the posting still taking applications? (LIVE / CLOSED / LIKELY_CLOSED / UNKNOWN)
   python jobpilot.py rescore <app>              re-render + re-score after you edit <app>/resume.json
   python jobpilot.py cover <app> [--render]     draft cover.md, then --render to fact-check and build cover.pdf
   python jobpilot.py kit <app>                  application kit: files to attach, apply link, ready-to-paste answers
@@ -50,7 +53,8 @@ def load_job(app):
 def cmd_init(a):
     os.makedirs(a.profile, exist_ok=True)
     pairs = [("base_resume.example.json", "base_resume.json"), ("confirmed_skills.example.json", "confirmed_skills.json"),
-             ("preferences.example.json", "preferences.json"), ("RUNBOOK.template.md", "RUNBOOK.md")]
+             ("preferences.example.json", "preferences.json"), ("boards.example.json", "boards.json"),
+             ("RUNBOOK.template.md", "RUNBOOK.md")]
     for src, dst in pairs:
         d = os.path.join(a.profile, dst)
         if os.path.exists(d):
@@ -219,6 +223,59 @@ def cmd_rank(a):
         w.writeheader(); w.writerows(rows)
     print(f"\nShortlist: {len(top)} worth tailoring. Saved {os.path.join(a.folder, 'ranked.md')} (+ ranked.csv) with the next commands.")
     return 0
+
+
+def cmd_scan(a):
+    os.environ["JOBPILOT_PROFILE"] = a.profile
+    import boards, fit
+    bp = os.path.join(a.profile, "boards.json")
+    if not os.path.exists(bp):
+        print(f"no {bp} yet – run `python jobpilot.py init` (it adds boards.json without touching your other files)")
+        return 1
+    cfg = json.load(open(bp, encoding="utf-8"))
+    out = os.path.abspath(a.out or os.path.join(os.path.dirname(a.apps), "postings"))
+    applied = set(os.listdir(a.apps)) if os.path.isdir(a.apps) else set()
+    report, saved = boards.scan(cfg, fit.load_prefs(), out, applied=applied, slugger=slug, max_age_days=a.max_age)
+    if not report:
+        print(f"{bp} lists no boards – add careers links like https://jobs.lever.co/<company>")
+        return 1
+    for r in report:
+        skipped = ", ".join(f"{n} {why}" for why, n in sorted(r["skipped"].items(), key=lambda kv: -kv[1]))
+        print(f"{r['company'][:24]:<24} {r['board'][:30]:<30} found {r['found']:>3}  new {r['kept']:>3}"
+              + (f"   ! {r['error']}" if r["error"] else f"   ({skipped})" if skipped else ""))
+    print(f"\nSaved {len(saved)} new postings to {out}" + (f'\nNext: python jobpilot.py rank "{out}"' if saved else ""))
+    return 1 if all(r["error"] for r in report) else 0
+
+
+def cmd_live(a):
+    import boards
+    if a.target.lower().startswith(("http://", "https://")):
+        targets = [(None, a.target, a.target)]
+    elif a.target == "all":
+        targets = []
+        for d in sorted(os.listdir(a.apps)) if os.path.isdir(a.apps) else []:
+            app = os.path.join(a.apps, d)
+            if os.path.exists(os.path.join(app, "job.json")):
+                j = load_job(app)
+                if j.get("stage") in ("found", "tailored", "applied", "interview"):
+                    targets.append((app, j.get("url", ""), f"{j['company']} – {j['title']}"))
+        if not targets:
+            print("no open applications to check"); return 0
+    else:
+        j = load_job(a.target)
+        targets = [(a.target, j.get("url", ""), f"{j['company']} – {j['title']}")]
+    closed = 0
+    for app, url, label in targets:
+        r = boards.check_live(url)
+        print(f"{r['status']:<14} {label[:60]}\n               {r['why']}")
+        closed += r["status"] in ("CLOSED", "LIKELY_CLOSED")
+        if app:
+            job = load_job(app)
+            job["live"] = {**r, "checked": now()}
+            save_job(app, job); write_report(app, job)
+    if closed and len(targets) > 1:
+        print(f"\n{closed} closed – mark them: python jobpilot.py stage <app> skipped --note closed")
+    return 6 if closed and len(targets) == 1 else 0
 
 
 def cmd_rescore(a):
@@ -415,6 +472,10 @@ def cmd_list(a):
 def write_report(app, job):
     L = [f"# {job['title']} – {job['company']}", ""]
     if job.get("url"): L += [f"Posting: {job['url']}", ""]
+    if job.get("live"):
+        lv = job["live"]
+        L += [("⚠ " if lv.get("status") in ("CLOSED", "LIKELY_CLOSED") else "") +
+              f"Still open? **{lv.get('status')}** – {lv.get('why', '')} (checked {lv.get('checked', '?')})", ""]
     g = job.get("guard", {})
     L += ["## 1. Safety check", "", ("⚠ " if g.get("warn") else "✓ ") + g.get("verdict", "")]
     L += [f"- [{i['where']}] {i['line']}" for i in g.get("instruction_lines", [])]
@@ -460,6 +521,8 @@ def main(argv=None):
     n = sp.add_parser("new"); n.add_argument("posting"); n.add_argument("--company", required=True); n.add_argument("--title", required=True)
     n.add_argument("--location", default=""); n.add_argument("--salary", default=""); n.add_argument("--url", default=""); n.add_argument("--force", action="store_true")
     rk = sp.add_parser("rank"); rk.add_argument("folder"); rk.add_argument("--top", type=int, default=10)
+    sc = sp.add_parser("scan"); sc.add_argument("--out", default=""); sc.add_argument("--max-age", type=int, default=None)
+    lv = sp.add_parser("live"); lv.add_argument("target", help="an app folder, a posting URL, or 'all'")
     for c in ("rescore", "prep", "kit"):
         sp.add_parser(c).add_argument("app")
     c = sp.add_parser("cover"); c.add_argument("app"); c.add_argument("--render", action="store_true")
@@ -470,7 +533,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     a.profile = os.path.abspath(a.profile); a.apps = os.path.abspath(a.apps)
     return {"init": cmd_init, "import": cmd_import, "doctor": cmd_doctor, "new": cmd_new, "rank": cmd_rank, "rescore": cmd_rescore, "cover": cmd_cover,
-            "prep": cmd_prep, "kit": cmd_kit, "stage": cmd_stage, "list": cmd_list,
+            "prep": cmd_prep, "kit": cmd_kit, "stage": cmd_stage, "list": cmd_list, "scan": cmd_scan, "live": cmd_live,
             "pack": cmd_pack, "unpack": cmd_unpack}[a.cmd](a)
 
 

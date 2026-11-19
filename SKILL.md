@@ -60,6 +60,10 @@ Look at your own tools – don't ask the user, and don't tell them a feature "ne
    and field and let them pick, e.g. India: LinkedIn, Naukri, Instahyre, Cutshort, Wellfound, Indeed, YC Work at a
    Startup, company career pages; remote: Himalayas, We Work Remotely, RemoteOK, Remotive. Write each with its search URL
    and filters (posted in last 24h, experience band, location). Note which need a sign-in.
+   **Company boards** → `profile/boards.json`: ask which companies they'd love to work at, find each careers page, and
+   add the ones hosted on Greenhouse, Lever or Ashby (`boards.greenhouse.io/<x>`, `jobs.lever.co/<x>`,
+   `jobs.ashbyhq.com/<x>`) as `{"company": …, "url": …}`. Replace the example entries. Run `jobpilot.py scan` once and
+   fix any board it reports as not found. These need no sign-in and are the most reliable source.
 6. **Sign-ins** (full mode) – open each sign-in source in the browser you'll use for runs and ask them to sign in themselves. Never
    type their passwords or create accounts for them. If a site keeps a sign-in popup open, ask them to finish or close it.
 7. **Already applied** – if their email is connected, search it (read-only) for application confirmations and list those
@@ -79,7 +83,10 @@ Log a Run log line at **every** stage below, and keep each job's Stage column cu
 1. **Start** – (chat mode: `unpack` the attached pack first; if there's none and no profile, do Setup.) Read
    `profile/RUNBOOK.md` and `preferences.json`. Log "Run started".
 2. **Email** (if connected) – add new confirmations, rejections or interview invites to *Already applied*; update Stages.
-3. **Search** – (chat mode: web search + fetch as described above) every source in the runbook, newest postings first, about 5 relevant per source, 10–15 new jobs per run.
+3. **Search** – first `jobpilot.py scan --out HOME_DIR/postings`: it pulls new matching jobs from every board in
+   `boards.json`, skips ones seen before or already in `apps/`, and saves them to `postings/` (if your sandbox has no
+   network, every board shows an error – then use web fetch on those careers pages instead). Then (chat mode: web
+   search + fetch as described above) every source in the runbook, newest postings first, about 5 relevant per source, 10–15 new jobs per run.
    Skip companies/roles already applied to. Save each full posting (page text or HTML) as
    `HOME_DIR/postings/<Company>__<Job Title>.txt`. Update *Sources* (searched, found, kept, needs sign-in).
 4. **Rank** – `jobpilot.py rank HOME_DIR/postings`. It runs the safety check, fit check and a quick ATS score and writes
@@ -92,11 +99,13 @@ Log a Run log line at **every** stage below, and keep each job's Stage column cu
 7. **Reviewer pass** (always, before applying) – reread `resume.pdf` against the posting as a sceptical recruiter who will
    check references; remove anything not backed by `base_resume.json` or `confirmed_skills.json`; rescore. Use a fresh
    sub-agent for this if you can.
-8. **Apply** – chat mode: hand over the application kit instead. Full mode: open the application, fill every field from `preferences.json` and the profile, attach
+8. **Still open?** – `jobpilot.py live apps/<job>` (exit 6 = closed). CLOSED or LIKELY_CLOSED → don't apply;
+   `jobpilot.py stage apps/<job> skipped --note closed` and tell the user. UNKNOWN → open the link and look.
+9. **Apply** – chat mode: hand over the application kit instead. Full mode: open the application, fill every field from `preferences.json` and the profile, attach
    `apps/<job>/resume.pdf` (and `cover.pdf` if asked – see below), answer screening questions truthfully, and **stop
    before Submit**. Stage "Awaiting approval". If the browser can't upload files, stop at the upload step and give the
    user the file path. If a site needs an account, a password, terms acceptance or an email code, stop and ask.
-9. **Finish** – log "Run finished" (or "Stopped – <reason>", e.g. usage limit), update Pipeline, and message the user:
+10. **Finish** – log "Run finished" (or "Stopped – <reason>", e.g. usage limit), update Pipeline, and message the user:
    jobs found, skipped and why, ATS first → final per job, forms waiting for their approval (with links), sign-ins needed.
    When they approve a form, submit it, then `jobpilot.py stage apps/<job> applied` and update the tracker.
    Chat mode: end with `jobpilot.py pack` and give them the updated pack file.
@@ -110,6 +119,8 @@ Log a Run log line at **every** stage below, and keep each job's Stage column cu
 - **Interview** – `jobpilot.py stage apps/<job> interview`, then `jobpilot.py prep apps/<job>`. Add company research
   (recent news, product, team), then offer a mock interview.
 - **Status** – summarise the tracker (or `jobpilot.py list`): what's waiting for them, what's applied, interviews.
+  Run `jobpilot.py live all` too, and point out applications whose posting has closed (often a quiet rejection or a
+  filled role – a cue to follow up or move on).
 
 ## Learning from the user
 When they confirm a new fact ("yes, I've used Tableau for 2 years", "my notice period is now 30 days"), write it back –

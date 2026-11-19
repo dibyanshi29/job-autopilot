@@ -1,0 +1,10 @@
+{
+  "_how": "Companies whose careers page runs on Greenhouse, Lever or Ashby. Paste the careers link (boards.greenhouse.io/<x>, job-boards.greenhouse.io/<x>, jobs.lever.co/<x>, jobs.ashbyhq.com/<x>) or give ats + slug. These are examples – replace them with companies you want. Add \"skip\": true to pause one.",
+  "max_age_days": 30,
+  "boards": [
+    {"company": "Stripe", "url": "https://boards.greenhouse.io/stripe"},
+    {"company": "Databricks", "ats": "greenhouse", "slug": "databricks"},
+    {"company": "Notion", "url": "https://jobs.ashbyhq.com/notion"},
+    {"company": "Palantir", "url": "https://jobs.lever.co/palantir"}
+  ]
+}

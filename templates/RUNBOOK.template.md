@@ -15,6 +15,8 @@ Signed-in boards (use the browser where you are signed in):
 - <Naukri / Indeed / Instahyre / Cutshort / Wellfound / Glassdoor …>
 Public boards (no sign-in, web fetch is fine):
 - <Himalayas https://himalayas.app/jobs · We Work Remotely · RemoteOK · Remotive · YC Work at a Startup>
+Company boards (no sign-in – listed in `boards.json`, run first):
+- `python jobpilot.py scan --out postings` → new matching jobs from every Greenhouse / Lever / Ashby board
 Company career pages:
 - <web search: "data analyst" site:boards.greenhouse.io OR site:jobs.lever.co <country>>
 If a source needs a sign-in you don't have, mark "Needs sign-in" and move on. Never type passwords.
@@ -34,7 +36,8 @@ If a source needs a sign-in you don't have, mark "Needs sign-in" and move on. Ne
    base resume or confirmed facts → remove it and rescore.
 6. **Cover letter** (only if the form asks or the user wants one): `jobpilot.py cover apps/<job>` → write the four paragraphs
    from the facts listed in the file → `jobpilot.py cover apps/<job> --render` (refuses invented numbers).
-7. **Apply**: fill every field from `preferences.json` standard answers, attach `apps/<job>/resume.pdf`,
+7. **Still open?** `python jobpilot.py live apps/<job>` – CLOSED / LIKELY_CLOSED → stage skipped, note "closed".
+8. **Apply**: fill every field from `preferences.json` standard answers, attach `apps/<job>/resume.pdf`,
    **stop before Submit**, set Stage "Awaiting approval". Submit only after the user says yes in chat.
 
 ## Standard answers (copy from preferences.json; ask the user when a question isn't covered)
