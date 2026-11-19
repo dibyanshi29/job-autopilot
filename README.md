@@ -31,8 +31,14 @@ You only chat. Claude handles the setup, the searching and the form filling.
 After each run you get a summary: the jobs it found, the ones it skipped and why, each resume's ATS score, and the
 application forms waiting for your approval.
 
-You need a Claude plan that includes Skills, plus the Claude desktop app, which lets Claude use your browser and keep
-your files in a folder on your laptop.
+**Works in any Claude chat.** It adapts to what your Claude can do:
+
+| | In the Claude desktop app, with a folder and browser connected | In any other chat |
+|---|---|---|
+| Finding jobs | Searches your job sites, signed in as you | Searches public listings on the web (LinkedIn public pages, company career sites, remote boards); you can paste links too |
+| Applying | Fills in the form and stops before Submit | Hands you an **application kit**: tailored resume, apply link, copy-paste answers |
+| Your data | Kept in a folder on your laptop | Kept in a **pack file** Claude gives you after each chat; attach it next time and say *"continue job autopilot"* |
+| Daily runs | On a schedule | Whenever you say *"run job autopilot"* |
 
 ## What else you can ask
 
@@ -110,9 +116,11 @@ job shows its quick ATS score and missing keywords. `ranked.md` lists the exact 
 | `rank <folder> [--top 10]` | Runs the safety check, fit check and a quick ATS score on every posting in a folder, then writes a ranked shortlist (`ranked.md`, `ranked.csv`) with the `new` command for each job worth tailoring |
 | `rescore <app>` | Re-renders and re-scores after you edit `<app>/resume.json` |
 | `cover <app>` then `cover <app> --render` | Drafts a cover letter outline, then fact-checks it and renders `cover.pdf` |
+| `kit <app>` | Writes an application kit: files to attach, apply link and copy-paste answers |
 | `prep <app>` | Writes an interview prep sheet |
 | `stage <app> applied\|interview\|offer\|rejected [--note]` | Updates the application's stage |
 | `list [--csv]` | Shows every application with its stage and score. `--csv` gives a spreadsheet-ready tracker. |
+| `pack [--out FILE]` / `unpack <file>` | Saves your profile and applications into one zip, and restores them (for chats without a folder) |
 
 Exit codes: `0` ok · `3` paused by safety check · `4` fit says skip · `5` ATS below target (default 80, set with `--target`).
 

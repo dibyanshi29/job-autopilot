@@ -9,8 +9,11 @@
   python jobpilot.py rank <folder> [--top 10]   safety + fit + quick ATS for every posting in a folder -> ranked shortlist
   python jobpilot.py rescore <app>              re-render + re-score after you edit <app>/resume.json
   python jobpilot.py cover <app> [--render]     draft cover.md, then --render to fact-check and build cover.pdf
+  python jobpilot.py kit <app>                  application kit: files to attach, apply link, ready-to-paste answers
   python jobpilot.py prep <app>                 interview prep sheet mapping the posting to your real experience
   python jobpilot.py stage <app> <stage>        found | tailored | applied | interview | offer | rejected | skipped
+  python jobpilot.py pack [--out FILE]          save profile + applications into one zip to keep between chats
+  python jobpilot.py unpack <pack.zip>          restore them from that zip
   python jobpilot.py list [--csv]               every application with score and stage
 
 Options: --profile DIR (default ./profile or $JOBPILOT_PROFILE), --apps DIR (default ./apps), --target 80
@@ -252,6 +255,45 @@ def cmd_cover(a):
     return 0
 
 
+def cmd_kit(a):
+    job = load_job(a.app)
+    pp = os.path.join(a.profile, "preferences.json")
+    prefs = json.load(open(pp, encoding="utf-8")) if os.path.exists(pp) else {}
+    bp = os.path.join(a.profile, "base_resume.json")
+    base = json.load(open(bp, encoding="utf-8")) if os.path.exists(bp) else {}
+    plain = lambda x: re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\2", str(x)).replace("mailto:", "").replace("**", "")
+    contact = [plain(c).strip() for c in base.get("contact", "").split("|")]
+    files = [f for f in ("resume.pdf", "cover.pdf") if os.path.exists(os.path.join(a.app, f))]
+    ats = job.get("ats", {})
+    L = [f"# Application kit – {job['title']}, {job['company']}", "",
+         f"**Apply here:** {job.get('url') or '(link not saved – search the company careers page)'}",
+         f"**Attach:** " + ", ".join(f"`{os.path.join(a.app, f)}`" for f in files),
+         f"**ATS score:** {ats.get('score', '?')}" + (f" (missing: {', '.join(ats.get('still_missing', [])[:6])})" if ats.get("still_missing") else ""),
+         "", "## Copy-paste answers", "", f"- **Name:** {base.get('name', '')}"]
+    for c in contact:
+        key = "Email" if "@" in c else "LinkedIn" if "linkedin" in c.lower() else "Phone" if re.search(r"\d{6,}", c.replace(" ", "")) else \
+              "Website" if re.search(r"https?://|\.\w{2,}/|github|\.io", c) else "Location"
+        if c: L.append(f"- **{key}:** {c}")
+    labels = {"notice_period": "Notice period", "current_ctc": "Current / last salary", "expected_ctc": "Expected salary",
+              "work_authorization": "Work authorisation", "relocation": "Relocation"}
+    for k, lab in labels.items():
+        if prefs.get(k): L.append(f"- **{lab}:** {prefs[k]}")
+    L.append(f"- **Years of experience:** {base.get('years_experience', '')}")
+    exp = base.get("experience", [])
+    if exp:
+        L.append(f"- **Current / last role:** {exp[0].get('title', '')}, {exp[0].get('company', '')} ({exp[0].get('dates', '')})")
+    if base.get("education"):
+        e = base["education"][0]; L.append(f"- **Highest education:** {e.get('degree', '')}, {e.get('school', '')} ({e.get('dates', '')})")
+    L += ["", "## Short answers you may be asked", "",
+          f"- **Why this role?** Write 2 sentences from the posting + your matching work (ask Claude: \"why-this-role answer for {job['company']}\").",
+          "- **Anything not listed above:** answer truthfully; if unsure, ask Claude before you submit.", "",
+          f"_After you submit: `python jobpilot.py stage {a.app} applied`_"]
+    out = os.path.join(a.app, "application_kit.md")
+    open(out, "w", encoding="utf-8").write("\n".join(L) + "\n")
+    print("\n".join(L)); print(f"\nsaved {out}")
+    return 0
+
+
 def cmd_prep(a):
     job = load_job(a.app)
     r = json.load(open(os.path.join(a.app, "resume.json"), encoding="utf-8"))
@@ -297,6 +339,51 @@ def cmd_stage(a):
     save_job(a.app, job)
     print(f"{job['company']} – {job['title']}: {a.stage}")
     return 0
+
+
+PACK_ROOTS = ("profile", "apps")
+
+
+def cmd_pack(a):
+    import zipfile
+    out = os.path.abspath(a.out or "jobautopilot-pack.zip")
+    n = 0
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for root_name, root in (("profile", a.profile), ("apps", a.apps)):
+            if not os.path.isdir(root):
+                continue
+            for dirpath, _, files in os.walk(root):
+                for f in files:
+                    full = os.path.join(dirpath, f)
+                    rel = os.path.relpath(full, root).replace(os.sep, "/")
+                    z.write(full, f"{root_name}/{rel}"); n += 1
+        z.writestr("PACK_README.txt", "Job Autopilot pack. Attach this file in a new chat and say 'continue job autopilot',\n"
+                   "or run: python jobpilot.py unpack <this file>. It holds personal data - keep it private.\n")
+    if not n:
+        print("nothing to pack yet (no profile/ or apps/)"); os.remove(out); return 1
+    print(f"packed {n} files -> {out}")
+    return 0
+
+
+def cmd_unpack(a):
+    import zipfile
+    dest = {"profile": a.profile, "apps": a.apps}
+    n, skipped = 0, []
+    with zipfile.ZipFile(a.pack) as z:
+        for info in z.infolist():
+            name = info.filename.replace("\\", "/")
+            parts = [p for p in name.split("/") if p not in ("", ".")]
+            if info.is_dir() or name == "PACK_README.txt":
+                continue
+            if not parts or parts[0] not in PACK_ROOTS or ".." in parts or ":" in name or name.startswith("/") or len(parts) < 2:
+                skipped.append(name); continue  # only profile/ and apps/ files, never paths that climb out
+            target = os.path.join(dest[parts[0]], *parts[1:])
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with z.open(info) as src, open(target, "wb") as fh:
+                fh.write(src.read(50_000_000))
+            n += 1
+    print(f"restored {n} files into {a.profile} and {a.apps}" + (f"; ignored {len(skipped)} unexpected entries" if skipped else ""))
+    return 0 if n else 1
 
 
 def cmd_list(a):
@@ -373,15 +460,18 @@ def main(argv=None):
     n = sp.add_parser("new"); n.add_argument("posting"); n.add_argument("--company", required=True); n.add_argument("--title", required=True)
     n.add_argument("--location", default=""); n.add_argument("--salary", default=""); n.add_argument("--url", default=""); n.add_argument("--force", action="store_true")
     rk = sp.add_parser("rank"); rk.add_argument("folder"); rk.add_argument("--top", type=int, default=10)
-    for c in ("rescore", "prep"):
+    for c in ("rescore", "prep", "kit"):
         sp.add_parser(c).add_argument("app")
     c = sp.add_parser("cover"); c.add_argument("app"); c.add_argument("--render", action="store_true")
     s = sp.add_parser("stage"); s.add_argument("app"); s.add_argument("stage"); s.add_argument("--note", default="")
     l = sp.add_parser("list"); l.add_argument("--csv", action="store_true")
+    pk = sp.add_parser("pack"); pk.add_argument("--out", default="")
+    up = sp.add_parser("unpack"); up.add_argument("pack")
     a = ap.parse_args(argv)
     a.profile = os.path.abspath(a.profile); a.apps = os.path.abspath(a.apps)
     return {"init": cmd_init, "import": cmd_import, "doctor": cmd_doctor, "new": cmd_new, "rank": cmd_rank, "rescore": cmd_rescore, "cover": cmd_cover,
-            "prep": cmd_prep, "stage": cmd_stage, "list": cmd_list}[a.cmd](a)
+            "prep": cmd_prep, "kit": cmd_kit, "stage": cmd_stage, "list": cmd_list,
+            "pack": cmd_pack, "unpack": cmd_unpack}[a.cmd](a)
 
 
 if __name__ == "__main__":

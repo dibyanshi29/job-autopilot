@@ -1,6 +1,6 @@
 ---
 name: job-autopilot
-description: Personal job-search autopilot. Sets a user up from their resume, then every day searches the job sites they use (with their own sign-ins), skips jobs they already applied to, safety- and fit-checks each posting, tailors their resume honestly, scores it with the Shortlist ATS Scanner and rewrites until it scores 80+, fills the application up to (never past) Submit, and tracks every stage live. Use when the user wants to set up, run, schedule or check their job search or applications, tailor a resume, rank postings, write a cover letter or prep for an interview.
+description: Personal job-search autopilot. Sets a user up from their resume, then every day searches the job sites they use (with their own sign-ins), skips jobs they already applied to, safety- and fit-checks each posting, tailors their resume honestly, scores it with the Shortlist ATS Scanner and rewrites until it scores 80+, fills the application up to (never past) Submit, and tracks every stage live. Use when the user wants to set up, run, continue, schedule or check their job search or applications, attaches a Job Autopilot pack, tailor a resume, rank postings, write a cover letter or prep for an interview.
 ---
 
 # Job Autopilot
@@ -9,23 +9,46 @@ The user should only ever chat. You do the setup, the searching, the tailoring a
 Follow the section that matches what they asked: **Setup** (first time, or "set up job autopilot"), **Run** ("run job
 autopilot", "find me jobs", a scheduled run), or one of the **Other requests**.
 
+## First: check what this session can do (silently), then pick a mode
+Look at your own tools – don't ask the user, and don't tell them a feature "needs a paid plan".
+- **Folder**: a tool to read/write a folder on the user's computer. **Browser**: tools to open and click web pages.
+  **Schedule**: a tool to create scheduled tasks. **Web**: web search + web fetch. **Email**: a connected mailbox.
+- **Full mode** = folder + browser (+ schedule). Everything below runs as written.
+- **Chat mode** = anything less. It still does the whole job, differently:
+  - *Keeping data*: no folder → work in your working directory, and at the end of **every** setup or run run
+    `jobpilot.py pack` and give the user the pack file: "Attach this file next time and say *continue job autopilot*."
+    When a user attaches a pack, run `jobpilot.py unpack <file>` first.
+  - *Finding jobs*: no browser → use web search + web fetch on public listings: LinkedIn public job pages
+    (`site:linkedin.com/jobs/view "<role>" "<city>"`), company career sites (`site:boards.greenhouse.io`,
+    `site:jobs.lever.co`, `site:jobs.ashbyhq.com`, `site:myworkdayjobs.com`), Naukri/Indeed/Instahyre listing pages that
+    open without sign-in, and remote boards (Himalayas, Remotive, RemoteOK, We Work Remotely). Prefer postings from
+    the last few days. The user can also paste links or postings at any time.
+  - *Applying*: no browser → for each job ready to apply, run `jobpilot.py kit apps/<job>` and give the user the
+    **application kit**: the tailored `resume.pdf` (and `cover.pdf`), the apply link and ready-to-paste answers.
+    The user submits; then `jobpilot.py stage apps/<job> applied`.
+  - *Schedule*: none → tell them to say "run job autopilot" whenever they want a fresh batch.
+  - *Tracker*: if you can't make a spreadsheet, show `jobpilot.py list` as a table and keep it in the pack.
+- Say once, in plain words, what this session will do (e.g. "I'll find jobs with web search and hand you ready-to-send
+  applications; I can't fill forms in your browser from here"). Then carry on – never stop at a missing feature.
+
 ## Where things live
 - `SKILL_DIR` = the folder containing this SKILL.md (the skill's base directory). It holds `jobpilot.py` (the engine
   you run), `scripts/`, `templates/`. Run commands as `python SKILL_DIR/jobpilot.py --profile <PROFILE> --apps <APPS> …`.
-- `HOME_DIR` = the user's own folder that persists between runs: a folder on their computer they connect (suggest
-  `Documents/JobAutopilot`). It holds `profile/` (resume data, preferences, runbook – private), `apps/` (one folder per
-  job: tailored resume, report, cover letter) and `postings/`. If you work in a sandbox, copy `HOME_DIR` in at the start
-  of every run and write changed files back at the end. If no folder can be connected, say once that nothing will be kept
-  between chats.
+- `HOME_DIR` = where the user's data lives: their connected folder in full mode (suggest `Documents/JobAutopilot`), else
+  your working directory plus the pack file. It holds `profile/` (resume data, preferences, runbook – private), `apps/`
+  (one folder per job) and `postings/`. If you work in a sandbox, copy a connected `HOME_DIR` in at the start of every
+  run and write changed files back at the end.
 - First time in a session: `pip install -r SKILL_DIR/requirements.txt` (add `--break-system-packages` if pip asks), check
   `node --version` (18+), then `python SKILL_DIR/jobpilot.py --profile HOME_DIR/profile doctor`. Fix anything it lists
   before going on – don't send the user to a terminal.
 
 ## Setup (once, as a conversation – ask a few things at a time, never a wall of questions)
-1. **Folder** – ask them to connect a folder for `HOME_DIR` (explain: "so your profile and resumes are kept").
+1. **Folder** – full mode: ask them to connect a folder for `HOME_DIR` ("so your profile and resumes are kept"). Chat
+   mode: explain the pack file instead (you'll hand it over at the end).
 2. **Resume** – ask for their resume (PDF or Word). Run `jobpilot.py import <file>`, then read `profile/base_resume.json`
-   with them. Fix what was misread, write a headline + 2–3 line summary for each role family that fits them, put each
-   job's strongest bullet first, wrap key numbers in `**bold**`.
+   with them. Fix what was misread, make sure there is one strong headline and a 2–3 line summary, put each job's
+   strongest bullet first, wrap key numbers in `**bold**`. (Only if they target clearly different kinds of roles, add
+   extra versions under `headlines`/`summaries` keyed `analyst`, `data`, `operations`, `supply_chain` or `program`.)
 3. **Honesty lists** (explain why: the resume will only ever claim what is true):
    - `evidence_map` – skills the resume proves (import fills it; prune anything doubtful).
    - Skills postings in their field often ask for that the resume doesn't show: ask "have you really used X?" and put yes
@@ -37,7 +60,7 @@ autopilot", "find me jobs", a scheduled run), or one of the **Other requests**.
    and field and let them pick, e.g. India: LinkedIn, Naukri, Instahyre, Cutshort, Wellfound, Indeed, YC Work at a
    Startup, company career pages; remote: Himalayas, We Work Remotely, RemoteOK, Remotive. Write each with its search URL
    and filters (posted in last 24h, experience band, location). Note which need a sign-in.
-6. **Sign-ins** – open each sign-in source in the browser you'll use for runs and ask them to sign in themselves. Never
+6. **Sign-ins** (full mode) – open each sign-in source in the browser you'll use for runs and ask them to sign in themselves. Never
    type their passwords or create accounts for them. If a site keeps a sign-in popup open, ask them to finish or close it.
 7. **Already applied** – if their email is connected, search it (read-only) for application confirmations and list those
    companies so they're never applied to twice. Never send, delete or label email.
@@ -46,15 +69,17 @@ autopilot", "find me jobs", a scheduled run), or one of the **Other requests**.
    ATS rounds, Location, Found on, Link, Resume file, Notes), **Run log** (Time, Stage, Detail), **Sources** (Source,
    Sign-in, Last searched, Found, Kept), **Already applied**. Without a tracker, `jobpilot.py list --csv` is the fallback.
 9. **Test** – run the pipeline on one real posting they like and show them the resume and report. Adjust until they're happy.
-10. **Schedule** – offer a daily run (a scheduled task whose prompt is "Run job autopilot using <HOME_DIR>/profile/RUNBOOK.md";
+10. **Schedule** (if available) – offer a daily run (a scheduled task whose prompt is "Run job autopilot using <HOME_DIR>/profile/RUNBOOK.md";
     it needs their computer and browser available). Tell them how they'll know a run finished: the Pipeline tab's last run
     status, a notification, and the summary message.
+11. **Chat mode only** – `jobpilot.py pack`, hand over the pack file, and tell them how to continue next time.
 
 ## Run (on request or on schedule)
 Log a Run log line at **every** stage below, and keep each job's Stage column current, so the user can follow along.
-1. **Start** – read `profile/RUNBOOK.md` and `preferences.json`. Log "Run started".
+1. **Start** – (chat mode: `unpack` the attached pack first; if there's none and no profile, do Setup.) Read
+   `profile/RUNBOOK.md` and `preferences.json`. Log "Run started".
 2. **Email** (if connected) – add new confirmations, rejections or interview invites to *Already applied*; update Stages.
-3. **Search** – every source in the runbook, newest postings first, about 5 relevant per source, 10–15 new jobs per run.
+3. **Search** – (chat mode: web search + fetch as described above) every source in the runbook, newest postings first, about 5 relevant per source, 10–15 new jobs per run.
    Skip companies/roles already applied to. Save each full posting (page text or HTML) as
    `HOME_DIR/postings/<Company>__<Job Title>.txt`. Update *Sources* (searched, found, kept, needs sign-in).
 4. **Rank** – `jobpilot.py rank HOME_DIR/postings`. It runs the safety check, fit check and a quick ATS score and writes
@@ -67,13 +92,14 @@ Log a Run log line at **every** stage below, and keep each job's Stage column cu
 7. **Reviewer pass** (always, before applying) – reread `resume.pdf` against the posting as a sceptical recruiter who will
    check references; remove anything not backed by `base_resume.json` or `confirmed_skills.json`; rescore. Use a fresh
    sub-agent for this if you can.
-8. **Apply** – open the application, fill every field from `preferences.json` and the profile, attach
+8. **Apply** – chat mode: hand over the application kit instead. Full mode: open the application, fill every field from `preferences.json` and the profile, attach
    `apps/<job>/resume.pdf` (and `cover.pdf` if asked – see below), answer screening questions truthfully, and **stop
    before Submit**. Stage "Awaiting approval". If the browser can't upload files, stop at the upload step and give the
    user the file path. If a site needs an account, a password, terms acceptance or an email code, stop and ask.
 9. **Finish** – log "Run finished" (or "Stopped – <reason>", e.g. usage limit), update Pipeline, and message the user:
    jobs found, skipped and why, ATS first → final per job, forms waiting for their approval (with links), sign-ins needed.
    When they approve a form, submit it, then `jobpilot.py stage apps/<job> applied` and update the tracker.
+   Chat mode: end with `jobpilot.py pack` and give them the updated pack file.
 
 ## Other requests
 - **"Tailor my resume for this job"** – save the posting, then Run steps 5–7 for that one job.
