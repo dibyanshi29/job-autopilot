@@ -41,8 +41,8 @@ python jobpilot.py init          # creates profile/ with example files
 python jobpilot.py doctor        # checks everything is installed
 ```
 
-1. Put your details into `profile/base_resume.json`. The example profile is a made-up person, so replace every field.
-   Claude can do this for you: share your resume and say *"set up job autopilot from my resume"*.
+1. Import your resume: `python jobpilot.py import my_resume.pdf` (PDF, Word .docx or .txt). It fills
+   `profile/base_resume.json` from your resume and lists anything it couldn't read. Open the file and check it.
 2. Set your roles, cities, salary floor and deal-breakers in `profile/preferences.json`.
 3. Paste a job posting into a text file (or save the page as `.html`) and run:
 
@@ -55,6 +55,7 @@ python jobpilot.py new posting.txt --company "Acme" --title "Business Analyst" -
 | Command | Does |
 |---|---|
 | `init` | Creates `profile/` from the templates. Existing files are never overwritten. |
+| `import <resume>` | Fills `profile/base_resume.json` from your PDF, DOCX or TXT resume. A real profile is never overwritten unless you add `--force`. |
 | `doctor` | Checks Python packages, Node, fonts and the profile |
 | `new <posting> --company --title [--location --salary --url --force]` | Runs safety check → fit check → tailoring and ATS loop, and creates `apps/<company>-<role>/` |
 | `rescore <app>` | Re-renders and re-scores after you edit `<app>/resume.json` |

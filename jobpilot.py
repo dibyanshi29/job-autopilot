@@ -2,6 +2,7 @@
 """jobpilot – honest, ATS-checked job applications from one command.
 
   python jobpilot.py init                       create ./profile from the templates
+  python jobpilot.py import resume.pdf          pre-fill profile/base_resume.json from your resume (PDF, DOCX or TXT)
   python jobpilot.py doctor                     check Python, Node, fonts
   python jobpilot.py new <posting> --company "Acme" --title "Data Analyst" [--location ..] [--salary ..] [--url ..]
                                                 safety check -> fit check -> tailor + ATS loop -> apps/<acme-data-analyst>/
@@ -53,15 +54,23 @@ def cmd_init(a):
         else:
             shutil.copy(os.path.join(ROOT, "templates", src), d)
             print(f"  created  {d}")
-    gi = os.path.join(os.path.dirname(os.path.abspath(a.profile)), ".gitignore")
+    if getattr(a, "quiet", False):
+        return 0
     print(f"""
 Next:
-  1. Fill {a.profile}/base_resume.json from your resume (or ask Claude: "set up job autopilot from my resume").
+  1. python jobpilot.py import your_resume.pdf   (fills base_resume.json; then read it and fix anything misread)
   2. Set roles, cities, salary floor and deal-breakers in {a.profile}/preferences.json.
   3. python jobpilot.py doctor
   4. python jobpilot.py new posting.txt --company "Acme" --title "Data Analyst"
 Your profile holds personal data – keep it out of any public repo (it is in .gitignore here).""")
     return 0
+
+
+def cmd_import(a):
+    import resume_import
+    if not os.path.exists(os.path.join(a.profile, "preferences.json")):
+        cmd_init(argparse.Namespace(profile=a.profile, quiet=True))
+    return resume_import.run(a.resume, os.path.join(a.profile, "base_resume.json"), a.force)
 
 
 def cmd_doctor(a):
@@ -289,6 +298,7 @@ def main(argv=None):
     ap.add_argument("--target", type=float, default=80)
     sp = ap.add_subparsers(dest="cmd", required=True)
     sp.add_parser("init"); sp.add_parser("doctor")
+    im = sp.add_parser("import"); im.add_argument("resume"); im.add_argument("--force", action="store_true")
     n = sp.add_parser("new"); n.add_argument("posting"); n.add_argument("--company", required=True); n.add_argument("--title", required=True)
     n.add_argument("--location", default=""); n.add_argument("--salary", default=""); n.add_argument("--url", default=""); n.add_argument("--force", action="store_true")
     for c in ("rescore", "prep"):
@@ -298,7 +308,7 @@ def main(argv=None):
     l = sp.add_parser("list"); l.add_argument("--csv", action="store_true")
     a = ap.parse_args(argv)
     a.profile = os.path.abspath(a.profile); a.apps = os.path.abspath(a.apps)
-    return {"init": cmd_init, "doctor": cmd_doctor, "new": cmd_new, "rescore": cmd_rescore, "cover": cmd_cover,
+    return {"init": cmd_init, "import": cmd_import, "doctor": cmd_doctor, "new": cmd_new, "rescore": cmd_rescore, "cover": cmd_cover,
             "prep": cmd_prep, "stage": cmd_stage, "list": cmd_list}[a.cmd](a)
 
 

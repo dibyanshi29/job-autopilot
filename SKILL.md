@@ -13,7 +13,7 @@ and optionally `cover.pdf` and `interview_prep.md`. Read `report.md` after each 
 
 ## Setup (first time, with the user)
 1. `python jobpilot.py init` → creates `profile/` (or `--profile DIR`, or `$JOBPILOT_PROFILE`). Then `python jobpilot.py doctor`.
-2. Fill `profile/base_resume.json` from the user's resume: contact as markdown links, `headlines` + `summaries` per role
+2. `python jobpilot.py import <their resume.pdf/.docx>` pre-fills `profile/base_resume.json`; then review it with the user and fix what was misread: contact as markdown links, `headlines` + `summaries` per role
    family, `experience` (lead bullet first), `projects`, `skills`, `education`, `awards`, `years_experience`, `target_titles`.
 3. Honesty lists in the same file:
    - `evidence_map`: JD keyword → [skills category, phrase] – only things the resume proves.
