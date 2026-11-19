@@ -24,7 +24,6 @@ HEADINGS = {
     "education": r"education( & certifications?)?|academics?|qualifications?",
     "awards": r"(awards?|achievements?|certifications?|honou?rs?|accomplishments?)( & (awards?|achievements?|certifications?))?",
 }
-FAMILIES = ["analyst", "data", "operations", "supply_chain", "program"]
 
 
 # ---------------------------------------------------------------- text extraction
@@ -236,7 +235,7 @@ def parse(text):
 
     return {
         "name": name, "years_experience": years, "contact": contact,
-        "headlines": {f: headline for f in FAMILIES}, "summaries": {f: summary for f in FAMILIES},
+        "headlines": {"default": headline}, "summaries": {"default": summary},
         "target_titles": titles, "experience": experience, "projects": projects, "skills": skills,
         "supported_extra_skills": {}, "education": education, "awards": awards,
         "evidence_map": evidence, "needs_confirmation": {}, "never_claim": [],
@@ -247,8 +246,8 @@ def report(r):
     warn = []
     if not r["name"]: warn.append("name not found – first line of the resume")
     if "@" not in r["contact"]: warn.append("no email found in the contact line")
-    if not r["headlines"]["data"]: warn.append("no headline (the line under your contact details) – add one per role family")
-    if not r["summaries"]["data"]: warn.append("no summary section found")
+    if not r["headlines"]["default"]: warn.append("no headline (the line under your contact details) – add one")
+    if not r["summaries"]["default"]: warn.append("no summary section found – add 2–3 lines")
     if not r["experience"]: warn.append("no experience entries found – check the EXPERIENCE heading")
     for e in r["experience"]:
         miss = [k for k in ("company", "title", "dates") if not e[k]]
@@ -262,9 +261,8 @@ def report(r):
     for e in r["experience"]:
         lines.append(f"  - {e['title'] or '?'} @ {e['company'] or '?'} ({e['dates'] or 'no dates'}), {len(e['bullets'])} bullets")
     lines += ["Check:"] + [f"  ! {w}" for w in warn] if warn else []
-    lines += ["Next: open base_resume.json and check every field. Then tailor headlines/summaries per role family, put a job's",
-              "strongest bullet first, wrap key numbers in **bold**, and move skills you're unsure of from evidence_map to",
-              "needs_confirmation. Then run: python jobpilot.py doctor"]
+    lines += ["Next: open base_resume.json and check every field. Put each job's strongest bullet first, wrap key numbers in",
+              "**bold**, and move skills you're unsure of from evidence_map to needs_confirmation. Then: python jobpilot.py doctor"]
     return "\n".join(lines)
 
 

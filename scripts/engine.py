@@ -170,8 +170,13 @@ def score(jd, title, r, pdf_path=None):
 
 def base_variant(fam):
     r = copy.deepcopy(BASE)
-    r["headline"] = BASE["headlines"][fam]
-    r["summary"] = BASE["summaries"][fam]
+    def pick(d, key):  # one "default" headline/summary is enough; per-role-family variants are optional
+        if isinstance(d, str):
+            return d
+        d = d or {}
+        return d.get(fam) or d.get("default") or next((v for v in d.values() if v), "")
+    r["headline"] = BASE.get("headline") or pick(BASE.get("headlines"), fam)
+    r["summary"] = BASE.get("summary") or pick(BASE.get("summaries"), fam)
     return r
 
 
