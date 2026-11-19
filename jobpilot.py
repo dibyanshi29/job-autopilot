@@ -6,6 +6,7 @@
   python jobpilot.py doctor                     check Python, Node, fonts
   python jobpilot.py new <posting> --company "Acme" --title "Data Analyst" [--location ..] [--salary ..] [--url ..]
                                                 safety check -> fit check -> tailor + ATS loop -> apps/<acme-data-analyst>/
+  python jobpilot.py rank <folder> [--top 10]   safety + fit + quick ATS for every posting in a folder -> ranked shortlist
   python jobpilot.py rescore <app>              re-render + re-score after you edit <app>/resume.json
   python jobpilot.py cover <app> [--render]     draft cover.md, then --render to fact-check and build cover.pdf
   python jobpilot.py prep <app>                 interview prep sheet mapping the posting to your real experience
@@ -145,6 +146,76 @@ def cmd_new(a):
     print(f"[3/3] ATS: {' -> '.join(str(h) for h in hist)}  ({verdict})")
     print(f"      {app}/resume.pdf\n      {app}/report.md")
     return 0 if res["score"] >= a.target else 5
+
+
+def posting_meta(path, text):
+    """Company / title / location / salary from 'Company:'-style lines at the top, else from the file name
+    ('Acme__Data Analyst.txt' or 'Acme - Data Analyst.txt'), else the first line."""
+    meta = {}
+    for line in text.splitlines()[:15]:
+        m = re.match(r"\s*(company|employer|title|role|position|location|salary|ctc|url|link)\s*:\s*(.+)", line, re.I)
+        if m:
+            k = {"employer": "company", "role": "title", "position": "title", "ctc": "salary", "link": "url"}.get(m.group(1).lower(), m.group(1).lower())
+            meta.setdefault(k, m.group(2).strip())
+    stem = os.path.splitext(os.path.basename(path))[0]
+    parts = re.split(r"__| - ", stem, maxsplit=1)
+    if len(parts) == 2:
+        meta.setdefault("company", parts[0].strip()); meta.setdefault("title", parts[1].strip())
+    first = next((l.strip() for l in text.splitlines() if l.strip()), stem)
+    meta.setdefault("company", stem if len(parts) < 2 else parts[0])
+    meta.setdefault("title", first[:80])
+    return meta
+
+
+def cmd_rank(a):
+    os.environ["JOBPILOT_PROFILE"] = a.profile
+    import posting_guard, fit, engine
+    prefs = fit.load_prefs()
+    files = sorted(f for f in os.listdir(a.folder) if f.lower().endswith((".txt", ".html", ".htm", ".md")) and not f.startswith("ranked"))
+    if not files:
+        print(f"no .txt / .html / .md postings in {a.folder}"); return 1
+    rows = []
+    for i, f in enumerate(files, 1):
+        path = os.path.join(a.folder, f)
+        raw = open(path, encoding="utf-8", errors="replace").read()
+        jd, g = posting_guard.guard(raw)
+        m = posting_meta(path, jd)
+        row = {"file": f, "company": m["company"], "title": m["title"], "location": m.get("location", ""),
+               "salary": m.get("salary", ""), "url": m.get("url", ""), "ats": "", "fit": "", "fit_score": 0, "why": ""}
+        print(f"[{i}/{len(files)}] {m['company']} – {m['title']}", flush=True)
+        if g["warn"]:
+            row.update(fit="PAUSED", why="safety: text aimed at an AI agent – read it before applying")
+        else:
+            fr = fit.check(jd, m["title"], m.get("location", ""), m.get("salary", ""), prefs)
+            row.update(fit=fr["verdict"], fit_score=fr["score"], why="; ".join(fr["reasons"] + fr["flags"]))
+            if fr["verdict"] != "SKIP":
+                try:
+                    res = engine.ats(engine.tailor(jd, m["title"]), jd, m["title"])
+                    row["ats"] = res["score"]
+                    miss = [x["k"] for x in res["gaps"]][:5]
+                    if miss:
+                        row["why"] = (row["why"] + "; " if row["why"] else "") + "missing: " + ", ".join(miss)
+                except Exception as e:  # keep ranking the rest
+                    row["why"] += f"; ATS failed: {e}"
+        rows.append(row)
+    order = {"GO": 0, "STRETCH": 1, "PAUSED": 2, "SKIP": 3}
+    rows.sort(key=lambda r: (order.get(r["fit"], 4), -(r["ats"] or 0), -r["fit_score"]))
+    print(f"\n{'#':>2}  {'fit':<8}{'ATS':>5}  {'company':<22}{'title':<34}why")
+    for n, r in enumerate(rows, 1):
+        print(f"{n:>2}  {r['fit']:<8}{str(r['ats']):>5}  {r['company'][:21]:<22}{r['title'][:33]:<34}{r['why'][:70]}")
+    md = ["# Ranked postings", "", f"{len(rows)} postings, ranked by fit then quick ATS score (before the rewrite pass).", "",
+          "| # | Fit | ATS | Company | Title | Notes | File |", "|---|---|---|---|---|---|---|"]
+    md += [f"| {n} | {r['fit']} | {r['ats']} | {r['company']} | {r['title']} | {r['why']} | {r['file']} |" for n, r in enumerate(rows, 1)]
+    top = [r for r in rows if r["fit"] in ("GO", "STRETCH")][:a.top]
+    if top:
+        md += ["", "## Next", ""] + [f'- `python jobpilot.py new "{os.path.join(a.folder, r["file"])}" --company "{r["company"]}" --title "{r["title"]}"'
+                                     + (f' --location "{r["location"]}"' if r["location"] else "") + "`" for r in top]
+    open(os.path.join(a.folder, "ranked.md"), "w", encoding="utf-8").write("\n".join(md) + "\n")
+    with open(os.path.join(a.folder, "ranked.csv"), "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=["file", "company", "title", "location", "salary", "url", "fit", "fit_score", "ats", "why"])
+        w.writeheader(); w.writerows(rows)
+    print(f"\nShortlist: {len(top)} worth tailoring. Saved {os.path.join(a.folder, 'ranked.md')} (+ ranked.csv) with the next commands.")
+    return 0
 
 
 def cmd_rescore(a):
@@ -301,6 +372,7 @@ def main(argv=None):
     im = sp.add_parser("import"); im.add_argument("resume"); im.add_argument("--force", action="store_true")
     n = sp.add_parser("new"); n.add_argument("posting"); n.add_argument("--company", required=True); n.add_argument("--title", required=True)
     n.add_argument("--location", default=""); n.add_argument("--salary", default=""); n.add_argument("--url", default=""); n.add_argument("--force", action="store_true")
+    rk = sp.add_parser("rank"); rk.add_argument("folder"); rk.add_argument("--top", type=int, default=10)
     for c in ("rescore", "prep"):
         sp.add_parser(c).add_argument("app")
     c = sp.add_parser("cover"); c.add_argument("app"); c.add_argument("--render", action="store_true")
@@ -308,7 +380,7 @@ def main(argv=None):
     l = sp.add_parser("list"); l.add_argument("--csv", action="store_true")
     a = ap.parse_args(argv)
     a.profile = os.path.abspath(a.profile); a.apps = os.path.abspath(a.apps)
-    return {"init": cmd_init, "import": cmd_import, "doctor": cmd_doctor, "new": cmd_new, "rescore": cmd_rescore, "cover": cmd_cover,
+    return {"init": cmd_init, "import": cmd_import, "doctor": cmd_doctor, "new": cmd_new, "rank": cmd_rank, "rescore": cmd_rescore, "cover": cmd_cover,
             "prep": cmd_prep, "stage": cmd_stage, "list": cmd_list}[a.cmd](a)
 
 

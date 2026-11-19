@@ -50,6 +50,17 @@ python jobpilot.py doctor        # checks everything is installed
 python jobpilot.py new posting.txt --company "Acme" --title "Business Analyst" --location "Remote" --url "https://…"
 ```
 
+### Got a pile of postings? Rank them first
+
+Save each posting as a text file in a folder, named `Company__Job Title.txt` (or put `Company:` and `Title:` lines at the top). Then:
+
+```bash
+python jobpilot.py rank postings/
+```
+
+You get a ranked shortlist: jobs that hit your deal-breakers drop to the bottom, poisoned postings are flagged, and each
+job shows its quick ATS score and missing keywords. `ranked.md` lists the exact `new` command to run for each one worth tailoring.
+
 ## All commands
 
 | Command | Does |
@@ -58,6 +69,7 @@ python jobpilot.py new posting.txt --company "Acme" --title "Business Analyst" -
 | `import <resume>` | Fills `profile/base_resume.json` from your PDF, DOCX or TXT resume. A real profile is never overwritten unless you add `--force`. |
 | `doctor` | Checks Python packages, Node, fonts and the profile |
 | `new <posting> --company --title [--location --salary --url --force]` | Runs safety check → fit check → tailoring and ATS loop, and creates `apps/<company>-<role>/` |
+| `rank <folder> [--top 10]` | Runs the safety check, fit check and a quick ATS score on every posting in a folder, then writes a ranked shortlist (`ranked.md`, `ranked.csv`) with the `new` command for each job worth tailoring |
 | `rescore <app>` | Re-renders and re-scores after you edit `<app>/resume.json` |
 | `cover <app>` then `cover <app> --render` | Drafts a cover letter outline, then fact-checks it and renders `cover.pdf` |
 | `prep <app>` | Writes an interview prep sheet |
